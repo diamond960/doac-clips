@@ -1,0 +1,13 @@
+Traceback (most recent call last):
+  File "/home/runner/work/doac-clips/doac-clips/scripts/make_clips.py", line 195, in main
+    process(job_path)
+  File "/home/runner/work/doac-clips/doac-clips/scripts/make_clips.py", line 151, in process
+    src = download(vid)
+          ^^^^^^^^^^^^^
+  File "/home/runner/work/doac-clips/doac-clips/scripts/make_clips.py", line 125, in download
+    run([
+  File "/home/runner/work/doac-clips/doac-clips/scripts/make_clips.py", line 35, in run
+    subprocess.run(cmd, check=True)
+  File "/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['yt-dlp', '--no-playlist', '--no-progress', '-f', 'bv*[height<=720][ext=mp4]+ba[ext=m4a]/b[height<=720]/bv*+ba/b', '--merge-output-format', 'mp4', '-o', '/home/runner/work/doac-clips/doac-clips/work/6VTSAs4Rsck.mp4', 'https://www.youtube.com/watch?v=6VTSAs4Rsck']' returned non-zero exit status 1.
