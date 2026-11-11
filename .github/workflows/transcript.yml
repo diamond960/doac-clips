@@ -1,0 +1,58 @@
+name: transcript
+
+# Push a file named requests/transcript/<video_id> to fetch that episode's captions.
+on:
+  push:
+    paths: ["requests/transcript/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: repo-writes
+  cancel-in-progress: false
+
+jobs:
+  transcript:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: denoland/setup-deno@v2
+      - name: Install yt-dlp
+        run: pip install -U "yt-dlp[default]"
+      - name: Fetch captions for new requests
+        shell: bash
+        run: |
+          mkdir -p work transcripts
+          for f in requests/transcript/*; do
+            [ -f "$f" ] || continue
+            id=$(basename -- "$f")
+            [ "$id" = ".gitkeep" ] && continue
+            [ -f "transcripts/$id.json" ] && continue
+            echo "== $id"
+            if yt-dlp --no-playlist --skip-download --write-info-json \
+                 --write-auto-subs --sub-langs "en-orig,en" --sub-format json3 \
+                 -o "work/%(id)s.%(ext)s" "https://www.youtube.com/watch?v=$id" > "work/$id.log" 2>&1 \
+               && python scripts/transcript.py "$id" work transcripts >> "work/$id.log" 2>&1; then
+              rm -f "transcripts/$id.error.txt"
+            else
+              tail -n 40 "work/$id.log" > "transcripts/$id.error.txt"
+            fi
+            cat "work/$id.log"
+          done
+      - name: Save results
+        if: always()
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add transcripts
+          git diff --cached --quiet && exit 0
+          git commit -m "Transcripts"
+          for i in 1 2 3 4 5; do git pull --rebase && git push && exit 0; sleep 5; done
+          exit 1
